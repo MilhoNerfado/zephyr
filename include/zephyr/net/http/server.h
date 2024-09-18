@@ -168,6 +168,8 @@ enum http_data_status {
 	HTTP_SERVER_DATA_MORE = 0,
 	/** Final data fragment in current transaction. */
 	HTTP_SERVER_DATA_FINAL = 1,
+	/** TODO */
+	HTTP_SERVER_DATA_COMPLETE = 2,
 };
 
 /** @brief Status of captured request headers */
@@ -233,6 +235,11 @@ struct http_resource_detail_dynamic {
 	 *  application.
 	 */
 	http_resource_dynamic_cb_t cb;
+
+	/** TODO
+	 *
+	 */
+	struct http_client_ctx *complete;
 
 	/** A pointer to the client currently processing resource, used to
 	 *  prevent concurrent access to the resource from multiple clients.

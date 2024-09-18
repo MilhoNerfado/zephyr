@@ -324,6 +324,12 @@ static void client_release_resources(struct http_client_ctx *client)
 			dynamic_detail = (struct http_resource_detail_dynamic *)detail;
 
 			if (dynamic_detail->holder != client) {
+				if (dynamic_detail->complete == client &&
+				    dynamic_detail->cb != NULL) {
+					dynamic_detail->cb(client, HTTP_SERVER_DATA_COMPLETE, NULL,
+							   0, dynamic_detail->user_data);
+				}
+
 				continue;
 			}
 
@@ -947,5 +953,5 @@ again:
 	}
 }
 
-K_THREAD_DEFINE(http_server_tid, CONFIG_HTTP_SERVER_STACK_SIZE,
-		http_server_thread, NULL, NULL, NULL, THREAD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(http_server_tid, CONFIG_HTTP_SERVER_STACK_SIZE, http_server_thread, NULL, NULL,
+		NULL, THREAD_PRIORITY, 0, 0);

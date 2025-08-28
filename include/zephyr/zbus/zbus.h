@@ -555,6 +555,58 @@ struct zbus_channel_observation {
  * @param[in] _name The subscriber's name.
  */
 #define ZBUS_MSG_SUBSCRIBER_DEFINE(_name) ZBUS_MSG_SUBSCRIBER_DEFINE_WITH_ENABLE(_name, true)
+
+/**
+ * @brief Leaves a code block guarded with @ref ZBUS_CLAIM after releasing the
+ * lock.
+ *
+ * See @ref ZBUS_CLAIM for details.
+ */
+#define ZBUS_CLAIM_BREAK continue
+
+/**
+ * @brief Guards a code block for safe manipulation of the given channel, automatically claiming
+ * the channel before executing the code block. The channel will be released either
+ * when reaching the end of the code block or when leaving the block with
+ * @ref ZBUS_CLAIM_BREAK.
+ *
+ * @details Example usage:
+ *
+ * @code{.c}
+ * ZBUS_CLAIM(&mychan, mytimeout) {
+ *
+ *   ...execute statements with the claim held...
+ *
+ *   if (some_condition) {
+ *     ...release the lock and leave the guarded section prematurely:
+ *     ZBUS_CLAIM_BREAK;
+ *   }
+ *
+ *   ...execute statements with the claim held...
+ *
+ * }
+ * @endcode
+ *
+ * Behind the scenes this pattern expands to a for-loop whose body is executed
+ * exactly once:
+ *
+ * @code{.c}
+ * for (int err = zbus_chan_claim(&mychan, mytimeout); ...; zbus_chan_finish(&mychan)) {
+ *     ...
+ * }
+ * @endcode
+ *
+ * @warning The code block must execute to its end or be left by calling
+ * @ref ZBUS_CLAIM_BREAK. Otherwise, e.g. if exiting the block with a break,
+ * goto or return statement, the channel will not be unclaimed on exit.
+ *
+ * @param[in] _chan Pointer to a channel to be blocked during the block execution
+ * @param _time k_timeout_t to wait while claiming the channel
+ */
+#define ZBUS_CLAIM(_chan, _time)                                                                   \
+	for (int __err = zbus_chan_claim(_chan, _time); __err == 0;                                \
+	     zbus_chan_finish(_chan), __err = -1)
+
 /**
  *
  * @brief Publish to a channel
